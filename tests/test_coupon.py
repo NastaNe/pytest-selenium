@@ -22,7 +22,7 @@ def test_set_print_of_discount_in_url(selenium):
 
 
 # Sometimes there are stale elementException. I think it is because of reloaded page after submitting terms
-# I think better to accept terms - setting cookies to JS
+# I think better to accept terms - setting cookies in JS
 def test_currency_is_the_same(selenium):
     main_page = MainPage(selenium).open()
     main_page_price = main_page.get_total_price()
