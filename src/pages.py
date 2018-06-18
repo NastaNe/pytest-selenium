@@ -8,9 +8,10 @@ class MainPage(object):
     def __init__(self, driver):
         self.driver = driver
         self.builder = ActionChains(self.driver)
-        self.instant_activation_locator = "//button[@type ='submit']"
+        self.instant_activation_locator = "//button[contains(text(), 'Instant Activation')]"
         self.discount_label_locator = "//*[@class = 'percent']"
         self.accept_locator = "//button[contains(text(), 'Accept')]"
+        self.total_price_locator = "//div[contains(@class, 'total-price-all')]"
 
     def open(self):
         self.driver.get("https://mackeeper.com/buy-now-bensolo")
@@ -32,15 +33,17 @@ class MainPage(object):
         accept = self.driver.find_element_by_xpath(self.accept_locator)
         self.builder.click(accept).perform()
         WebDriverWait(self.driver, 20).until(EC.invisibility_of_element_located((By.XPATH, self.accept_locator)))
+        WebDriverWait(self.driver, 20).until(lambda x: self.page_has_loaded())
 
     def go_to_checkout(self):
-        WebDriverWait(self.driver, 20).until(lambda x: self.page_has_loaded())
-        WebDriverWait(self.driver, 30).until(EC.invisibility_of_element_located((By.XPATH,
-                                                                                 self.instant_activation_locator)))
+        WebDriverWait(self.driver, 30).until(EC.visibility_of_element_located((By.XPATH, self.instant_activation_locator)))
         instant_activation = self.driver.find_element_by_xpath(self.instant_activation_locator)
         self.builder.move_to_element(instant_activation).perform()
         self.builder.click(instant_activation).perform()
         return CheckoutPage(self.driver)
+
+    def get_total_price(self):
+        return self.driver.find_element_by_xpath(self.total_price_locator).get_attribute('value')
 
     # Should be in Class Page (in order to use in all pages)
     def page_has_loaded(self):
@@ -56,5 +59,5 @@ class CheckoutPage(object):
     def get_total(self):
         WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.ID,
                                                                                self.total_element_locator)))
-        total = self.driver.find_element_by_class_name(self.total_element_locator)
-        return total.getText()
+        total = self.driver.find_element_by_id(self.total_element_locator)
+        return total.get_attribute('value')
