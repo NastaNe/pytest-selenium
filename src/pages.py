@@ -7,8 +7,10 @@ from selenium.webdriver.support import expected_conditions as EC
 class MainPage(object):
     def __init__(self, driver):
         self.driver = driver
-        self.instant_activation_element = self.driver.find_element_by_xpath("//button[@type ='submit']")
-        self.discount_label_locator = 'percent'
+        self.builder = ActionChains(self.driver)
+        self.instant_activation_locator = "//button[@type ='submit']"
+        self.discount_label_locator = "//*[@class = 'percent']"
+        self.accept_locator = "//button[contains(text(), 'Accept')]"
 
     def open(self):
         self.driver.get("https://mackeeper.com/buy-now-bensolo")
@@ -18,22 +20,41 @@ class MainPage(object):
         url = self.driver.current_url + '&printOfDiscount=' + discount
         self.driver.get(url)
 
+        # Better to writer wrapper function - such as clickElement(and wait for visibility of element there)
+        # and not to write WebdriverWait all the time
     def is_discount_label_exist(self):
-        WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.CLASS_NAME,
+        WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH,
                                                                                self.discount_label_locator)))
-        percent = self.driver.find_element_by_class_name(self.discount_label_locator)
+        percent = self.driver.find_element_by_xpath(self.discount_label_locator)
         return percent.is_displayed()
 
+    def accept_terms(self):
+        accept = self.driver.find_element_by_xpath(self.accept_locator)
+        self.builder.click(accept).perform()
+        WebDriverWait(self.driver, 20).until(EC.invisibility_of_element_located((By.XPATH, self.accept_locator)))
+
     def go_to_checkout(self):
-        builder = ActionChains(self.driver)
-        builder.move_to_element(self.instant_activation_element).click().perform()
+        WebDriverWait(self.driver, 20).until(lambda x: self.page_has_loaded())
+        WebDriverWait(self.driver, 30).until(EC.invisibility_of_element_located((By.XPATH,
+                                                                                 self.instant_activation_locator)))
+        instant_activation = self.driver.find_element_by_xpath(self.instant_activation_locator)
+        self.builder.move_to_element(instant_activation).perform()
+        self.builder.click(instant_activation).perform()
         return CheckoutPage(self.driver)
+
+    # Should be in Class Page (in order to use in all pages)
+    def page_has_loaded(self):
+        page_state = self.driver.execute_script('return document.readyState;')
+        return page_state == 'complete'
 
 
 class CheckoutPage(object):
     def __init__(self, driver):
         self.driver = driver
-        self.total_element = self.driver.find_element_by_id('cbp_ID0ENA_ID0EAAABADBBAAOA')
+        self.total_element_locator = 'cbp_ID0ENA_ID0EAAABADBBAAOA'
 
     def get_total(self):
-        return self.total_element.getText()
+        WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.ID,
+                                                                               self.total_element_locator)))
+        total = self.driver.find_element_by_class_name(self.total_element_locator)
+        return total.getText()
