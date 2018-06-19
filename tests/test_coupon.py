@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from src.pages import MainPage
@@ -32,18 +34,21 @@ def test_price_is_changing_when_entering_coupon(selenium):
     main_page.set_coupon_code('rec0v')
     assert main_page.get_total_price() != old_price
 
+
 def test_coupon_is_added_in_checkout(selenium):
     main_page = MainPage(selenium).open()
     main_page.set_coupon_code('rec0v')
     main_page_price = main_page.get_total_price()
     checkout_page = main_page.go_to_checkout()
-    assert checkout_page.get_total() in main_page_price
+    pattern = "(?:[\£\$\€]{1}[,\d]+.?\d*)"
+    assert re.findall(pattern, main_page_price)[0] in re.findall(pattern, checkout_page.get_total())[0]
 
 
-# Sometimes there are stale elementException. I think it is because of reloaded page after submitting terms
-# I think better to accept terms - setting cookies in JS
 def test_currency_is_the_same(selenium):
     main_page = MainPage(selenium).open()
     main_page_price = main_page.get_total_price()
     checkout_page = main_page.go_to_checkout()
-    assert checkout_page.get_total() in main_page_price
+    pattern = "(?:[\£\$\€])"
+    assert re.findall(pattern, checkout_page.get_total())[0] == re.findall(pattern, main_page_price)[0]
+
+# Cannot understand what I should check there : -	На чекауте сохраняется affid

@@ -12,6 +12,7 @@ class MainPage(object):
     def __init__(self, driver):
         self.driver = driver
         self.builder = ActionChains(self.driver)
+        # CSS selectors maybe a better option
         self.instant_activation_locator = "//button[contains(text(), 'Instant Activation')]"
         self.discount_label_locator = "//*[@class = 'percent']"
         self.accept_locator = "//button[contains(text(), 'Accept')]"
@@ -61,8 +62,8 @@ class MainPage(object):
         WebDriverWait(self.driver, 30).until(
             EC.visibility_of_element_located((By.XPATH, self.instant_activation_locator)))
         instant_activation = self.driver.find_element_by_xpath(self.instant_activation_locator)
-        self.builder.move_to_element(instant_activation).perform()
-        self.builder.click(instant_activation).perform()
+        self.builder.move_to_element(instant_activation)
+        instant_activation.click()
         return CheckoutPage(self.driver)
 
     def get_total_price(self):
